@@ -37,6 +37,7 @@ public class Tile : MonoBehaviour
         this.cell.tile = this;
 
         transform.position = cell.transform.position;
+        (transform as RectTransform).sizeDelta = (cell.transform as RectTransform).sizeDelta;
     }
 
     public void MoveTo(TileCell cell)

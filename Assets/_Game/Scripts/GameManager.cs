@@ -46,7 +46,7 @@ public class GameManager : MonoBehaviour
         gameOver.interactable = false;
 
         // update board state
-        board.ClearBoard();
+        board.BuildBoard();
         board.CreateTile();
         board.CreateTile();
         board.enabled = true;

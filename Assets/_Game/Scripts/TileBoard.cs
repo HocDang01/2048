@@ -6,7 +6,8 @@ public class TileBoard : MonoBehaviour
 {
     [SerializeField] private Tile tilePrefab;
     [SerializeField] private TileState[] tileStates;
-
+    [SerializeField] private int _width = 4;
+    [SerializeField] private int _height = 4;
     private TileGrid grid;
     private List<Tile> tiles;
     private bool waiting;
@@ -14,20 +15,34 @@ public class TileBoard : MonoBehaviour
     private void Awake()
     {
         grid = GetComponentInChildren<TileGrid>();
-        tiles = new List<Tile>(16);
+        tiles = new List<Tile>();
+    }
+
+    public void BuildBoard()
+    {
+        ClearBoard();
+        grid.BuildBoard(_width, _height);
     }
 
     public void ClearBoard()
     {
-        foreach (var cell in grid.cells) {
-            cell.tile = null;
+        if (grid != null && grid.cells != null)
+        {
+            foreach (var cell in grid.cells)
+            {
+                cell.tile = null;
+            }
         }
 
-        foreach (var tile in tiles) {
-            Destroy(tile.gameObject);
-        }
+        if (tiles != null)
+        {
+            foreach (var tile in tiles)
+            {
+                Destroy(tile.gameObject);
+            }
 
-        tiles.Clear();
+            tiles.Clear();
+        }
     }
 
     public void CreateTile()
@@ -61,7 +76,7 @@ public class TileBoard : MonoBehaviour
         {
             Move(Vector2Int.right, grid.Width - 2, -1, 0, 1);
         }
-        
+
     }
 
     private void Move(Vector2Int direction, int startX, int incrementX, int startY, int incrementY)
@@ -74,13 +89,15 @@ public class TileBoard : MonoBehaviour
             {
                 TileCell cell = grid.GetCell(x, y);
 
-                if (cell.Occupied) {
+                if (cell.Occupied)
+                {
                     changed |= MoveTile(cell.tile, direction);
                 }
             }
         }
 
-        if (changed) {
+        if (changed)
+        {
             StartCoroutine(WaitForChanges());
         }
     }
@@ -137,7 +154,8 @@ public class TileBoard : MonoBehaviour
     {
         for (int i = 0; i < tileStates.Length; i++)
         {
-            if (state == tileStates[i]) {
+            if (state == tileStates[i])
+            {
                 return i;
             }
         }
@@ -153,22 +171,26 @@ public class TileBoard : MonoBehaviour
 
         waiting = false;
 
-        foreach (var tile in tiles) {
+        foreach (var tile in tiles)
+        {
             tile.locked = false;
         }
 
-        if (tiles.Count != grid.Size) {
+        if (tiles.Count != grid.Size)
+        {
             CreateTile();
         }
 
-        if (CheckForGameOver()) {
+        if (CheckForGameOver())
+        {
             GameManager.Instance.GameOver();
         }
     }
 
     public bool CheckForGameOver()
     {
-        if (tiles.Count != grid.Size) {
+        if (tiles.Count != grid.Size)
+        {
             return false;
         }
 
@@ -179,19 +201,23 @@ public class TileBoard : MonoBehaviour
             TileCell left = grid.GetAdjacentCell(tile.cell, Vector2Int.left);
             TileCell right = grid.GetAdjacentCell(tile.cell, Vector2Int.right);
 
-            if (up != null && CanMerge(tile, up.tile)) {
+            if (up != null && CanMerge(tile, up.tile))
+            {
                 return false;
             }
 
-            if (down != null && CanMerge(tile, down.tile)) {
+            if (down != null && CanMerge(tile, down.tile))
+            {
                 return false;
             }
 
-            if (left != null && CanMerge(tile, left.tile)) {
+            if (left != null && CanMerge(tile, left.tile))
+            {
                 return false;
             }
 
-            if (right != null && CanMerge(tile, right.tile)) {
+            if (right != null && CanMerge(tile, right.tile))
+            {
                 return false;
             }
         }
