@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da7eb619f13b9e438623a1594a8013d, type: 3}
   m_Name: 4096
   m_EditorClassIdentifier: 
+  number: 4096
   backgroundColor: {r: 0.9372549, g: 0.39607844, b: 0.41960785, a: 1}
   textColor: {r: 0.9764706, g: 0.9647059, b: 0.9490196, a: 1}
-  number: 4096
+  catSprite: {fileID: 21300000, guid: b1e46f4ac289f3c4abe2d864dac891b6, type: 3}
