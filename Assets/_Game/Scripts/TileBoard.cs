@@ -17,6 +17,11 @@ public class TileBoard : MonoBehaviour
         grid = GetComponentInChildren<TileGrid>();
         tiles = new List<Tile>();
     }
+    public void SetBoardSize(int width, int height)
+    {
+        _width = width;
+        _height = height;
+    }
 
     public void BuildBoard()
     {
@@ -30,7 +35,7 @@ public class TileBoard : MonoBehaviour
         {
             foreach (var cell in grid.cells)
             {
-                cell.tile = null;
+                Destroy(cell.gameObject);
             }
         }
 
@@ -147,7 +152,7 @@ public class TileBoard : MonoBehaviour
         TileState newState = tileStates[index];
 
         b.SetState(newState);
-        GameManager.Instance.IncreaseScore(newState.number);
+        GameManager.Ins.IncreaseScore(newState.number);
     }
 
     private int IndexOf(TileState state)
@@ -183,7 +188,7 @@ public class TileBoard : MonoBehaviour
 
         if (CheckForGameOver())
         {
-            GameManager.Instance.GameOver();
+            GameManager.Ins.GameOver();
         }
     }
 
