@@ -1,14 +1,17 @@
 using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class PopupGameover : BaseUI<PopupGameover>
 {
-    [SerializeField] private Button _homeBtn;
-    [SerializeField] private Button _replayBtn;
-
+    [SerializeField] private Image _title;
+    [SerializeField] private Sprite _gameOverSprite;
+    [SerializeField] private Sprite _newScoreSprite;
+    [SerializeField] private TMP_Text _score;
+    [SerializeField] private TMP_Text _bestScore;
     private CanvasGroup _canvasGroup;
     protected override void Awake()
     {
@@ -18,26 +21,12 @@ public class PopupGameover : BaseUI<PopupGameover>
 
     void OnEnable()
     {
-        _homeBtn.onClick.AddListener(BackToMainMenu);
-        _replayBtn.onClick.AddListener(Replay);
-    }
-    void OnDisable()
-    {
-        _homeBtn.onClick.RemoveListener(BackToMainMenu);
-        _replayBtn.onClick.RemoveListener(Replay);
-    }
+        int score = GameManager.Ins.Score;
+        int bestScore = GameManager.GetBestScore();
+        _score.text = $"{score}";
+        _bestScore.text = $"{bestScore}";
 
-    private void Replay()
-    {
-        GameManager.Ins.NewGame();
-        Hide();
-    }
-
-    private void BackToMainMenu()
-    {
-        ViewGameplay.Hide();
-        ViewMainMenu.Show();
-        Hide();
+        _title.sprite = score >= bestScore? _newScoreSprite : _gameOverSprite;
     }
 
     protected override void OnShow()

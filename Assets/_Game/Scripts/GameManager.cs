@@ -11,7 +11,10 @@ public class GameManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreText;
     [SerializeField] private TextMeshProUGUI hiscoreText;
 
-    public int score { get; private set; } = 0;
+    public static int WIDTH;
+    public static int HEIGHT;
+
+    public int Score { get; private set; } = 0;
 
     private void Awake()
     {
@@ -29,18 +32,17 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    public static void SetBoardSize(int width, int height)
     {
-        NewGame();
+        WIDTH = width;
+        HEIGHT = height;
     }
-
-    public void SetBoardSize(int width, int height) => board.SetBoardSize(width, height);
 
     public void NewGame()
     {
         // reset score
         SetScore(0);
-        hiscoreText.text = LoadHiscore().ToString();
+        hiscoreText.text = GetBestScore().ToString();
 
         // update board state
         board.BuildBoard();
@@ -58,29 +60,35 @@ public class GameManager : MonoBehaviour
 
     public void IncreaseScore(int points)
     {
-        SetScore(score + points);
+        SetScore(Score + points);
     }
 
     private void SetScore(int score)
     {
-        this.score = score;
+        this.Score = score;
         scoreText.text = score.ToString();
 
-        SaveHiscore();
+        SaveBestScore();
     }
 
-    private void SaveHiscore()
+    private void SaveBestScore()
     {
-        int hiscore = LoadHiscore();
+        int hiscore = GetBestScore();
 
-        if (score > hiscore) {
-            PlayerPrefs.SetInt("hiscore", score);
+        if (Score > hiscore) {
+            PlayerPrefs.SetInt(GetBestScoreString(), Score);
+            hiscoreText.text = $"{Score}";
         }
     }
 
-    private int LoadHiscore()
+    public static int GetBestScore()
     {
-        return PlayerPrefs.GetInt("hiscore", 0);
+        return PlayerPrefs.GetInt(GetBestScoreString(), 0);
+    }
+
+    public static string GetBestScoreString()
+    {
+        return $"{Consts.BESTSCORE}_{WIDTH}_{HEIGHT}";
     }
 
 }

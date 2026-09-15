@@ -30,20 +30,24 @@ public class ButtonGameMode : MonoBehaviour
     }
     private void OnClick()
     {
-        switch(_gameMode)
+        switch (_gameMode)
         {
             case GameMode.VeryEasy:
-                GameManager.Ins.SetBoardSize(3,3);
+                GameManager.SetBoardSize(3, 3);
                 break;
             case GameMode.Easy:
-                GameManager.Ins.SetBoardSize(4,4);
+                GameManager.SetBoardSize(4, 4);
                 break;
             case GameMode.Medium:
-                GameManager.Ins.SetBoardSize(5,5);
+                GameManager.SetBoardSize(5, 5);
                 break;
             case GameMode.Hard:
-                GameManager.Ins.SetBoardSize(6,6);
+                GameManager.SetBoardSize(6, 6);
                 break;
+            case GameMode.Custom:
+                PopupCustomGame.Show();
+                PopupSelectMode.Show();
+                return;
         }
         ViewMainMenu.Hide();
         ViewGameplay.Show();

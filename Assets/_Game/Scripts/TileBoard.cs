@@ -6,8 +6,6 @@ public class TileBoard : MonoBehaviour
 {
     [SerializeField] private Tile tilePrefab;
     [SerializeField] private TileState[] tileStates;
-    [SerializeField] private int _width = 4;
-    [SerializeField] private int _height = 4;
     private TileGrid grid;
     private List<Tile> tiles;
     private bool waiting;
@@ -17,16 +15,11 @@ public class TileBoard : MonoBehaviour
         grid = GetComponentInChildren<TileGrid>();
         tiles = new List<Tile>();
     }
-    public void SetBoardSize(int width, int height)
-    {
-        _width = width;
-        _height = height;
-    }
 
     public void BuildBoard()
     {
         ClearBoard();
-        grid.BuildBoard(_width, _height);
+        grid.BuildBoard(GameManager.WIDTH, GameManager.HEIGHT);
     }
 
     public void ClearBoard()
