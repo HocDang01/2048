@@ -15,6 +15,7 @@ public class GameManager : MonoBehaviour
     public static int HEIGHT;
 
     public int Score { get; private set; } = 0;
+    public bool CanUndo => board != null && board.CanUndo;
 
     private void Awake()
     {
@@ -57,10 +58,23 @@ public class GameManager : MonoBehaviour
         PopupGameover.Show();
     }
 
+    public void Undo()
+    {
+        if (board == null || !board.Undo()) return;
+
+        board.enabled = true;
+        PopupGameover.Hide();
+    }
+
 
     public void IncreaseScore(int points)
     {
         SetScore(Score + points);
+    }
+
+    public void RestoreScore(int score)
+    {
+        SetScore(score);
     }
 
     private void SetScore(int score)

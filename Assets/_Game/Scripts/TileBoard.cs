@@ -4,22 +4,42 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 public class TileBoard : MonoBehaviour
 {
+    private sealed class BoardSnapshot
+    {
+        public readonly int[] stateIndices;
+        public readonly int score;
+
+        public BoardSnapshot(int[] stateIndices, int score)
+        {
+            this.stateIndices = stateIndices;
+            this.score = score;
+        }
+    }
+
     [SerializeField] private Tile tilePrefab;
     [SerializeField] private TileState[] tileStates;
+    [SerializeField] private float swipeThreshold = 50f;
     private TileGrid grid;
     private List<Tile> tiles;
+    private Stack<BoardSnapshot> history;
     private bool waiting;
+    private Vector2 touchStartPosition;
+    private bool trackingTouch;
+
+    public bool CanUndo => !waiting && history != null && history.Count > 0;
 
     private void Awake()
     {
         grid = GetComponentInChildren<TileGrid>();
         tiles = new List<Tile>();
+        history = new Stack<BoardSnapshot>();
     }
 
     public void BuildBoard()
     {
         ClearBoard();
         grid.BuildBoard(GameManager.WIDTH, GameManager.HEIGHT);
+        history.Clear();
     }
 
     public void ClearBoard()
@@ -54,31 +74,78 @@ public class TileBoard : MonoBehaviour
     private void Update()
     {
         if (waiting) return;
-        if (Keyboard.current.wKey.wasPressedThisFrame ||
-            Keyboard.current.upArrowKey.wasPressedThisFrame)
+        if (grid == null || grid.cells == null || grid.cells.Length == 0) return;
+
+        HandleTouchInput();
+
+        if (Keyboard.current != null &&
+            (Keyboard.current.wKey.wasPressedThisFrame ||
+             Keyboard.current.upArrowKey.wasPressedThisFrame))
         {
             Move(Vector2Int.up, 0, 1, 1, 1);
         }
-        else if (Keyboard.current.aKey.wasPressedThisFrame ||
-                Keyboard.current.leftArrowKey.wasPressedThisFrame)
+        else if (Keyboard.current != null &&
+                 (Keyboard.current.aKey.wasPressedThisFrame ||
+                  Keyboard.current.leftArrowKey.wasPressedThisFrame))
         {
             Move(Vector2Int.left, 1, 1, 0, 1);
         }
-        else if (Keyboard.current.sKey.wasPressedThisFrame ||
-                Keyboard.current.downArrowKey.wasPressedThisFrame)
+        else if (Keyboard.current != null &&
+                 (Keyboard.current.sKey.wasPressedThisFrame ||
+                  Keyboard.current.downArrowKey.wasPressedThisFrame))
         {
             Move(Vector2Int.down, 0, 1, grid.Height - 2, -1);
         }
-        else if (Keyboard.current.dKey.wasPressedThisFrame ||
-                Keyboard.current.rightArrowKey.wasPressedThisFrame)
+        else if (Keyboard.current != null &&
+                 (Keyboard.current.dKey.wasPressedThisFrame ||
+                  Keyboard.current.rightArrowKey.wasPressedThisFrame))
         {
             Move(Vector2Int.right, grid.Width - 2, -1, 0, 1);
         }
 
     }
 
+    private void HandleTouchInput()
+    {
+        if (Touchscreen.current == null) return;
+
+        var touch = Touchscreen.current.primaryTouch;
+
+        if (touch.press.wasPressedThisFrame)
+        {
+            touchStartPosition = touch.position.ReadValue();
+            trackingTouch = true;
+        }
+
+        if (trackingTouch && touch.press.wasReleasedThisFrame)
+        {
+            Vector2 delta = touch.position.ReadValue() - touchStartPosition;
+            trackingTouch = false;
+
+            if (delta.magnitude < swipeThreshold) return;
+
+            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
+            {
+                Move(delta.x > 0 ? Vector2Int.right : Vector2Int.left,
+                    delta.x > 0 ? grid.Width - 2 : 1,
+                    delta.x > 0 ? -1 : 1,
+                    0,
+                    1);
+            }
+            else
+            {
+                Move(delta.y > 0 ? Vector2Int.up : Vector2Int.down,
+                    0,
+                    1,
+                    delta.y > 0 ? 1 : grid.Height - 2,
+                    delta.y > 0 ? 1 : -1);
+            }
+        }
+    }
+
     private void Move(Vector2Int direction, int startX, int incrementX, int startY, int incrementY)
     {
+        BoardSnapshot beforeMove = CaptureSnapshot();
         bool changed = false;
 
         for (int x = startX; x >= 0 && x < grid.Width; x += incrementX)
@@ -96,6 +163,7 @@ public class TileBoard : MonoBehaviour
 
         if (changed)
         {
+            history.Push(beforeMove);
             StartCoroutine(WaitForChanges());
         }
     }
@@ -183,6 +251,50 @@ public class TileBoard : MonoBehaviour
         {
             GameManager.Ins.GameOver();
         }
+    }
+
+    public bool Undo()
+    {
+        if (!CanUndo) return false;
+
+        StopAllCoroutines();
+        waiting = false;
+
+        BoardSnapshot snapshot = history.Pop();
+        RestoreSnapshot(snapshot);
+        return true;
+    }
+
+    private BoardSnapshot CaptureSnapshot()
+    {
+        int[] stateIndices = new int[grid.Size];
+
+        for (int i = 0; i < grid.cells.Length; i++)
+        {
+            Tile tile = grid.cells[i].tile;
+            stateIndices[i] = tile == null ? -1 : IndexOf(tile.state);
+        }
+
+        return new BoardSnapshot(stateIndices, GameManager.Ins.Score);
+    }
+
+    private void RestoreSnapshot(BoardSnapshot snapshot)
+    {
+        ClearBoard();
+        grid.BuildBoard(GameManager.WIDTH, GameManager.HEIGHT);
+
+        for (int i = 0; i < snapshot.stateIndices.Length; i++)
+        {
+            int stateIndex = snapshot.stateIndices[i];
+            if (stateIndex < 0) continue;
+
+            Tile tile = Instantiate(tilePrefab, grid.transform);
+            tile.SetState(tileStates[stateIndex]);
+            tile.Spawn(grid.cells[i]);
+            tiles.Add(tile);
+        }
+
+        GameManager.Ins.RestoreScore(snapshot.score);
     }
 
     public bool CheckForGameOver()

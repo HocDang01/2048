@@ -7336,6 +7336,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 19b4310b755bd894a999f0202d2f671d, type: 2}
   - {fileID: 11400000, guid: 0a300fade7d43e94abe37c35dc38c0d9, type: 2}
   - {fileID: 11400000, guid: 1be54a437c57bd940a0bc02aae22d9be, type: 2}
+  swipeThreshold: 50
 --- !u!1 &1008060457
 GameObject:
   m_ObjectHideFlags: 0
@@ -10198,6 +10199,7 @@ GameObject:
   - component: {fileID: 1605867811}
   - component: {fileID: 1605867810}
   - component: {fileID: 1605867809}
+  - component: {fileID: 1605867812}
   m_Layer: 5
   m_Name: Undo
   m_TagString: Untagged
@@ -10308,6 +10310,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1605867807}
   m_CullTransparentMesh: 1
+--- !u!114 &1605867812
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1605867807}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ec030730a2431a478bc00f9b0bfbae4, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonUndo
 --- !u!1 &1622594471
 GameObject:
   m_ObjectHideFlags: 0
