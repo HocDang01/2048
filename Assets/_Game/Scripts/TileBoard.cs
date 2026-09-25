@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 public class TileBoard : MonoBehaviour
 {
     private sealed class BoardSnapshot
@@ -25,6 +26,9 @@ public class TileBoard : MonoBehaviour
     private bool waiting;
     private Vector2 touchStartPosition;
     private bool trackingTouch;
+#if UNITY_EDITOR
+    private bool touchSimulationEnabled;
+#endif
 
     public bool CanUndo => !waiting && history != null && history.Count > 0;
 
@@ -33,6 +37,38 @@ public class TileBoard : MonoBehaviour
         grid = GetComponentInChildren<TileGrid>();
         tiles = new List<Tile>();
         history = new Stack<BoardSnapshot>();
+    }
+
+    private void OnEnable()
+    {
+#if UNITY_EDITOR
+        if (Touchscreen.current == null)
+        {
+            TouchSimulation.Enable();
+            touchSimulationEnabled = true;
+        }
+#endif
+    }
+
+    private void OnDisable()
+    {
+        trackingTouch = false;
+
+#if UNITY_EDITOR
+        if (touchSimulationEnabled)
+        {
+            TouchSimulation.Disable();
+            touchSimulationEnabled = false;
+        }
+#endif
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            trackingTouch = false;
+        }
     }
 
     public void BuildBoard()
@@ -110,36 +146,48 @@ public class TileBoard : MonoBehaviour
         if (Touchscreen.current == null) return;
 
         var touch = Touchscreen.current.primaryTouch;
-
-        if (touch.press.wasPressedThisFrame)
+        Debug.Log("Touch 00");
+        switch (touch.phase.ReadValue())
         {
-            touchStartPosition = touch.position.ReadValue();
-            trackingTouch = true;
+            case UnityEngine.InputSystem.TouchPhase.Began:
+                Debug.Log("Touch");
+                touchStartPosition = touch.position.ReadValue();
+                trackingTouch = true;
+                break;
+
+            case UnityEngine.InputSystem.TouchPhase.Ended:
+                if (!trackingTouch) break;
+
+                Vector2 delta = touch.position.ReadValue() - touchStartPosition;
+                trackingTouch = false;
+                TryMoveFromSwipe(delta);
+                break;
+
+            case UnityEngine.InputSystem.TouchPhase.Canceled:
+                trackingTouch = false;
+                break;
         }
+    }
 
-        if (trackingTouch && touch.press.wasReleasedThisFrame)
+    private void TryMoveFromSwipe(Vector2 delta)
+    {
+        if (delta.magnitude < swipeThreshold) return;
+
+        if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
         {
-            Vector2 delta = touch.position.ReadValue() - touchStartPosition;
-            trackingTouch = false;
-
-            if (delta.magnitude < swipeThreshold) return;
-
-            if (Mathf.Abs(delta.x) > Mathf.Abs(delta.y))
-            {
-                Move(delta.x > 0 ? Vector2Int.right : Vector2Int.left,
-                    delta.x > 0 ? grid.Width - 2 : 1,
-                    delta.x > 0 ? -1 : 1,
-                    0,
-                    1);
-            }
-            else
-            {
-                Move(delta.y > 0 ? Vector2Int.up : Vector2Int.down,
-                    0,
-                    1,
-                    delta.y > 0 ? 1 : grid.Height - 2,
-                    delta.y > 0 ? 1 : -1);
-            }
+            Move(delta.x > 0 ? Vector2Int.right : Vector2Int.left,
+                delta.x > 0 ? grid.Width - 2 : 1,
+                delta.x > 0 ? -1 : 1,
+                0,
+                1);
+        }
+        else
+        {
+            Move(delta.y > 0 ? Vector2Int.up : Vector2Int.down,
+                0,
+                1,
+                delta.y > 0 ? 1 : grid.Height - 2,
+                delta.y > 0 ? 1 : -1);
         }
     }
 
