@@ -26,6 +26,8 @@ public class TileBoard : MonoBehaviour
     private bool waiting;
     private Vector2 touchStartPosition;
     private bool trackingTouch;
+    private Vector2 mouseStartPosition;
+    private bool trackingMouse;
 #if UNITY_EDITOR
     private bool touchSimulationEnabled;
 #endif
@@ -141,16 +143,41 @@ public class TileBoard : MonoBehaviour
 
     }
 
+
     private void HandleTouchInput()
     {
+        // Mouse input: WebGL on desktop browsers
+        if (Mouse.current != null)
+        {
+            var mouse = Mouse.current;
+
+            if (mouse.leftButton.wasPressedThisFrame)
+            {
+                mouseStartPosition = mouse.position.ReadValue();
+                trackingMouse = true;
+            }
+
+            if (mouse.leftButton.wasReleasedThisFrame)
+            {
+                if (trackingMouse)
+                {
+                    Vector2 delta =
+                        mouse.position.ReadValue() - mouseStartPosition;
+
+                    trackingMouse = false;
+                    TryMoveFromSwipe(delta);
+                }
+            }
+        }
+
+        // Touch input: mobile and touchscreen devices
         if (Touchscreen.current == null) return;
 
         var touch = Touchscreen.current.primaryTouch;
-        Debug.Log("Touch 00");
+
         switch (touch.phase.ReadValue())
         {
             case UnityEngine.InputSystem.TouchPhase.Began:
-                Debug.Log("Touch");
                 touchStartPosition = touch.position.ReadValue();
                 trackingTouch = true;
                 break;
@@ -158,7 +185,9 @@ public class TileBoard : MonoBehaviour
             case UnityEngine.InputSystem.TouchPhase.Ended:
                 if (!trackingTouch) break;
 
-                Vector2 delta = touch.position.ReadValue() - touchStartPosition;
+                Vector2 delta =
+                    touch.position.ReadValue() - touchStartPosition;
+
                 trackingTouch = false;
                 TryMoveFromSwipe(delta);
                 break;
@@ -168,7 +197,6 @@ public class TileBoard : MonoBehaviour
                 break;
         }
     }
-
     private void TryMoveFromSwipe(Vector2 delta)
     {
         if (delta.magnitude < swipeThreshold) return;
